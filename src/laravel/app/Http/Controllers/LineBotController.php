@@ -6,14 +6,17 @@ use Illuminate\Http\Request;
 use LINE\LINEBot;
 use LINE\LINEBot\Event\MessageEvent\TextMessage;
 use LINE\LINEBot\MessageBuilder\TextMessageBuilder;
+use App\Services\ChatGptService;
 
 class LineBotController extends Controller
 {
     private $lineBot;
+    private $chatGptService;
 
-    public function __construct(LINEBot $lineBot)
+    public function __construct(LineBot $lineBot, ChatGptService $chatGptService)
     {
         $this->lineBot = $lineBot;
+        $this->chatGptService = $chatGptService;
     }
 
     public function callback(Request $request)
@@ -32,8 +35,9 @@ class LineBotController extends Controller
         foreach ($events as $event) {
             if ($event instanceof TextMessage) {
                 $replyText = $event->getText();
+                $gptResponse = $this->chatGptService->generateResponse($replyText);
                 $replyToken = $event->getReplyToken();
-                $textMessageBuilder = new TextMessageBuilder($replyText);
+                $textMessageBuilder = new TextMessageBuilder($gptResponse);
 
                 $this->lineBot->replyMessage($replyToken, $textMessageBuilder);
             }
